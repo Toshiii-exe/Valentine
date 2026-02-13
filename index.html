@@ -139,6 +139,7 @@
             z-index: 1;
             animation: float-up var(--duration) linear infinite;
             filter: blur(1px);
+            opacity: 0;
         }
 
         @keyframes float-up {
@@ -159,6 +160,18 @@
                 transform: translateY(-10vh) translateX(var(--drift)) rotate(360deg);
                 opacity: 0;
             }
+        }
+
+        /* Prevent background elements from catching clicks */
+        #hearts-container,
+        #stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
         }
 
         /* Layout Container */
@@ -578,56 +591,90 @@
             transform: translateX(-50%) translateY(0);
         }
 
-        /* RESPONSIVE */
+        /* RESPONSIVE DESIGN SYSTEM */
         @media (max-width: 600px) {
+            :root {
+                --card-padding: 25px 20px;
+            }
+
             .main-container {
-                padding: 15px;
+                padding: 10px;
                 width: 100%;
             }
 
             .glass-card {
-                padding: 25px 20px;
+                padding: var(--card-padding);
+                border-radius: 20px;
             }
 
             .title-premium {
-                font-size: 1.8rem;
+                font-size: 1.6rem;
+                margin-bottom: 15px;
             }
 
             .subtitle-premium {
-                font-size: 2.2rem;
+                font-size: 2rem;
+                margin-bottom: 20px;
+            }
+
+            .body-text {
+                font-size: 0.95rem;
+                margin-bottom: 25px;
             }
 
             .envelope-container {
-                width: 100%;
-                max-width: 280px;
-                height: 190px;
+                width: 260px;
+                height: 170px;
+                margin: 30px auto;
             }
 
             .btn-group {
                 flex-direction: column;
-                width: 100%;
+                gap: 12px;
             }
 
             .btn-premium {
-                width: 100%;
+                padding: 14px 24px;
+                font-size: 0.95rem;
+                border-radius: 12px;
             }
         }
 
         @media (max-width: 380px) {
             .title-premium {
-                font-size: 1.5rem;
+                font-size: 1.4rem;
             }
 
             .subtitle-premium {
-                font-size: 1.8rem;
+                font-size: 1.7rem;
             }
 
             .envelope-container {
-                height: 160px;
+                width: 230px;
+                height: 150px;
             }
 
-            .gift-grid {
-                grid-template-columns: 1fr !important;
+            .body-text {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-height: 700px) {
+            .main-container {
+                padding-top: 5px;
+                padding-bottom: 5px;
+            }
+
+            .title-premium {
+                margin-bottom: 10px;
+            }
+
+            .envelope-container {
+                margin: 20px auto;
+            }
+
+            .floating-heart {
+                display: none;
             }
         }
 
@@ -811,7 +858,7 @@
     <div class="toast" id="toast">Copied!</div>
 
     <style>
-        /* New Styles for Gift Grid and Modal */
+        /* CONSOLIDATED GRID & MODAL STYLES */
         .gift-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -823,9 +870,9 @@
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--glass-border);
             border-radius: 16px;
-            padding: 15px;
+            padding: 20px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -833,9 +880,10 @@
         }
 
         .gift-item:hover {
-            background: rgba(255, 77, 109, 0.1);
-            transform: translateY(-5px);
+            background: rgba(255, 77, 109, 0.15);
+            transform: translateY(-8px);
             border-color: var(--primary-rose);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
         }
 
         .gift-box-icon {
@@ -869,8 +917,8 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
+            backdrop-filter: blur(12px);
+            z-index: 2000;
             display: none;
             justify-content: center;
             align-items: center;
@@ -884,6 +932,9 @@
         .modal-content {
             max-width: 400px;
             width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
             animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
@@ -900,9 +951,9 @@
         }
 
         .revealed-icon {
-            font-size: 5rem;
+            font-size: 4.5rem;
             margin-bottom: 20px;
-            filter: drop-shadow(0 0 20px rgba(255, 77, 109, 0.5));
+            filter: drop-shadow(0 0 25px rgba(255, 77, 109, 0.6));
         }
 
         .message-container {
@@ -910,12 +961,28 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            margin-bottom: 20px;
         }
 
         #gift-message {
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             font-style: italic;
             color: #fff;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 450px) {
+            .gift-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .gift-item {
+                padding: 15px;
+            }
+
+            .revealed-icon {
+                font-size: 3.5rem;
+            }
         }
     </style>
 
@@ -1053,16 +1120,48 @@
             createConfetti();
         });
 
+        const btnYes = document.getElementById('btn-yes');
         const btnNo = document.getElementById('btn-no');
         let hoverCount = 0;
+        let yesScale = 1;
+
+        function moveBtnNo() {
+            // Calculated strictly within viewport constraints
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            // Allow larger movement range but keep on screen
+            // Use 35% of viewport to be safe from edges
+            const maxX = viewportWidth * 0.35;
+            const maxY = viewportHeight * 0.35;
+
+            const x = (Math.random() - 0.5) * 2 * maxX;
+            const y = (Math.random() - 0.5) * 2 * maxY;
+
+            btnNo.style.transform = `translate(${x}px, ${y}px)`;
+
+            // Make 'Yes' button grow
+            yesScale += 0.15;
+            btnYes.style.transform = `scale(${yesScale})`;
+            btnYes.style.zIndex = "100";
+        }
+
+        // Mouse interaction
         btnNo.addEventListener('mouseover', function () {
-            if (hoverCount < 10) {
-                const x = (Math.random() - 0.5) * 300;
-                const y = (Math.random() - 0.5) * 300;
-                this.style.transform = `translate(${x}px, ${y}px)`;
+            if (hoverCount < 15) {
+                moveBtnNo();
                 hoverCount++;
             }
         });
+
+        // Touch interaction
+        btnNo.addEventListener('touchstart', function (e) {
+            if (hoverCount < 15) {
+                e.preventDefault();
+                moveBtnNo();
+                hoverCount++;
+            }
+        }, { passive: false });
 
         btnNo.addEventListener('click', () => showScreen('screen-no-content'));
 
